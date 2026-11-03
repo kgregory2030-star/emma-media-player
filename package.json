@@ -1,0 +1,45 @@
+{
+  "name": "emma-media-player",
+  "productName": "Emma Media Player",
+  "version": "1.0.0",
+  "description": "A simple, friendly media player. A free gift from Azure Cyber Systems, Kenya.",
+  "main": "main.js",
+  "author": "Gerishon Kenga, Azure Cyber Systems, Kenya",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "ke.azurecyber.emmamediaplayer",
+    "productName": "Emma Media Player",
+    "copyright": "Azure Cyber Systems, Kenya",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "renderer/**/*", "build/icon.png", "package.json"],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Emma Media Player",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Emma-Media-Player-Setup-${version}.${ext}"
+    },
+    "portable": { "artifactName": "Emma-Media-Player-Portable-${version}.${ext}" },
+    "fileAssociations": [
+      { "ext": ["mp4", "m4v", "mov", "mkv", "webm", "ogv"], "name": "Video file", "role": "Viewer" },
+      { "ext": ["mp3", "m4a", "aac", "wav", "ogg", "oga", "opus", "flac"], "name": "Audio file", "role": "Viewer" }
+    ]
+  }
+}
