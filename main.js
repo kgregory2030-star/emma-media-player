@@ -1,6 +1,7 @@
 /* Emma Media Player: the small program that opens the window and talks to the computer. */
 "use strict";
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, protocol } = require("electron");
+const { Readable } = require("stream");
 const path = require("path");
 const fs = require("fs");
 
@@ -8,6 +9,42 @@ const MEDIA_EXT = new Set([".mp4", ".m4v", ".mov", ".mkv", ".webm", ".ogv", ".av
   ".mp3", ".m4a", ".aac", ".wav", ".ogg", ".oga", ".opus", ".flac", ".weba"]);
 const SUB_EXT = new Set([".srt", ".vtt"]);
 let win = null;
+
+/* Media is served through our own small address (emma-media://) so the equalizer is allowed to process the sound.
+   Only real media files can be served, and only to this player window. */
+protocol.registerSchemesAsPrivileged([
+  { scheme: "emma-media", privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, corsEnabled: true } }
+]);
+const MIME = { ".mp4": "video/mp4", ".m4v": "video/mp4", ".mov": "video/mp4", ".mkv": "video/x-matroska", ".webm": "video/webm", ".ogv": "video/ogg",
+  ".avi": "video/x-msvideo", ".wmv": "video/x-ms-wmv", ".mpg": "video/mpeg", ".mpeg": "video/mpeg", ".3gp": "video/3gpp",
+  ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".aac": "audio/aac", ".wav": "audio/wav", ".ogg": "audio/ogg", ".oga": "audio/ogg",
+  ".opus": "audio/ogg", ".flac": "audio/flac", ".weba": "audio/webm" };
+function serveMedia(request) {
+  const cors = { "Access-Control-Allow-Origin": "*", "Accept-Ranges": "bytes" };
+  try {
+    const u = new URL(request.url);
+    const file = decodeURIComponent(u.pathname.replace(/^\//, ""));
+    if (!path.isAbsolute(file) || !isMedia(file)) return new Response("Not allowed", { status: 403, headers: cors });
+    const st = fs.statSync(file);
+    if (!st.isFile()) return new Response("Not found", { status: 404, headers: cors });
+    const size = st.size, type = MIME[path.extname(file).toLowerCase()] || "application/octet-stream";
+    let start = 0, end = size - 1, status = 200;
+    const r = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get("range") || "");
+    if (r && (r[1] || r[2])) {
+      if (r[1]) { start = parseInt(r[1], 10); if (r[2]) end = Math.min(parseInt(r[2], 10), size - 1); }
+      else { start = Math.max(0, size - parseInt(r[2], 10)); }
+      if (start > end || start >= size) return new Response("Bad range", { status: 416, headers: { ...cors, "Content-Range": "bytes */" + size } });
+      status = 206;
+    }
+    const headers = { ...cors, "Content-Type": type, "Content-Length": String(size ? end - start + 1 : 0) };
+    if (status === 206) headers["Content-Range"] = "bytes " + start + "-" + end + "/" + size;
+    if (!size) return new Response(null, { status: 200, headers });
+    const stream = fs.createReadStream(file, { start, end });
+    return new Response(Readable.toWeb(stream), { status, headers });
+  } catch (e) {
+    return new Response("Could not read the file", { status: 404, headers: cors });
+  }
+}
 
 const isMedia = p => MEDIA_EXT.has(path.extname(String(p)).toLowerCase());
 const natural = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
@@ -55,7 +92,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on("second-instance", (_e, argv) => {
     if (win) { if (win.isMinimized()) win.restore(); win.focus(); send("open-files", argvFiles(argv)); }
   });
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => { protocol.handle("emma-media", serveMedia); createWindow(); });
   app.on("window-all-closed", () => app.quit());
 }
 

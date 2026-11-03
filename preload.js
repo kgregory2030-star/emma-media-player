@@ -1,15 +1,9 @@
 /* The only things the player screen is allowed to ask the computer for. */
 "use strict";
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
-let pathToFileURL = null;
-try { pathToFileURL = require("url").pathToFileURL; } catch (e) { pathToFileURL = null; }
 
 function toUrl(p) {
-  p = String(p);
-  try { if (pathToFileURL) return pathToFileURL(p).href; } catch (e) { /* use the fallback */ }
-  let s = p.replace(/\\/g, "/");
-  if (!s.startsWith("/")) s = "/" + s;
-  return "file://" + s.split("/").map((x, i) => (i ? encodeURIComponent(x).replace(/%3A/i, ":") : x)).join("/");
+  return "emma-media://f/" + encodeURIComponent(String(p));
 }
 contextBridge.exposeInMainWorld("emma", {
   toUrl,

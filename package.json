@@ -1,7 +1,7 @@
 {
   "name": "emma-media-player",
   "productName": "Emma Media Player",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A simple, friendly media player. A free gift from Azure Cyber Systems, Kenya.",
   "main": "main.js",
   "author": "Gerishon Kenga, Azure Cyber Systems, Kenya",

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: blob:; media-src emma-media: blob:; style-src 'self'; script-src 'self'; connect-src 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Emma Media Player</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="app">
+ <div id="stage">
+  <video id="v" playsinline crossorigin="anonymous"></video>
+  <div id="empty">
+   <img src="emma_face.png" alt="">
+   <h1>Emma Media Player</h1>
+   <p class="tag">Play your videos and music</p>
+   <div class="eb"><button type="button" class="pill" id="e-open">Open files</button><button type="button" class="pill" id="e-folder">Open a folder</button></div>
+   <p class="hint">or drag and drop files here</p>
+  </div>
+  <div id="viz" class="hide"><img src="emma_face.png" alt=""><div id="vname"></div><div id="vbars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div id="osd"></div>
+  <div id="toast"><span id="tmsg"></span><button type="button" id="tbtn" class="hide"></button></div>
+  <div id="drop">Drop to play</div>
+ </div>
+ <aside id="list" class="hide">
+  <div class="lh"><b>Playlist</b><span id="lcount"></span>
+   <button type="button" class="sm" id="l-add" title="Add files (O)">+ Files</button>
+   <button type="button" class="sm" id="l-clear" title="Clear the playlist">Clear</button></div>
+  <ul id="items"></ul>
+  <div id="lempty">The playlist is empty.<br>Open or drop some files.</div>
+ </aside>
+ <div id="bar">
+  <div class="seekrow"><span id="cur">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Position"><span id="dur">0:00</span></div>
+  <div class="btns">
+   <div class="g left">
+    <button type="button" class="sb" id="b-open" title="Open files (O)" aria-label="Open files"><svg viewBox="0 0 24 24"><path d="M3 5h7l2 2h9v12H3z"/></svg></button>
+    <button type="button" class="sb" id="b-prev" title="Previous (P)" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM20 6v12L9.5 12z"/></svg></button>
+    <button type="button" class="sb" id="b-back" title="Back 10 seconds (J)" aria-label="Back 10 seconds"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.2" font-size="7.5" text-anchor="middle" font-weight="700" font-family="Segoe UI,Arial,sans-serif">10</text></svg></button>
+    <button type="button" class="sb big" id="b-play" title="Play or pause (Space)" aria-label="Play or pause"><svg class="ip" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="ia" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+    <button type="button" class="sb" id="b-fwd" title="Forward 10 seconds (L)" aria-label="Forward 10 seconds"><svg viewBox="0 0 24 24"><path transform="translate(24 0) scale(-1 1)" d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.2" font-size="7.5" text-anchor="middle" font-weight="700" font-family="Segoe UI,Arial,sans-serif">10</text></svg></button>
+    <button type="button" class="sb" id="b-next" title="Next (N)" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM4 6l10.5 6L4 18z"/></svg></button>
+   </div>
+   <div class="g right">
+    <button type="button" class="sb" id="b-mute" title="Mute (M)" aria-label="Mute"><svg class="iv" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9z"/><path class="st" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.8a9 9 0 0 1 0 12.4"/></svg><svg class="im" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9z"/><path class="st" d="M16 9l5 6M21 9l-5 6"/></svg></button>
+    <input id="vol" type="range" min="0" max="100" value="100" aria-label="Volume">
+    <button type="button" class="sb txt" id="b-speed" title="Speed ([ and ])" aria-label="Speed">1x</button>
+    <button type="button" class="sb txt" id="b-eq" title="Equalizer (E)" aria-label="Equalizer">EQ</button>
+    <button type="button" class="sb" id="b-rot" title="Rotate the video (R)" aria-label="Rotate"><svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 0 8 8h-2a6 6 0 1 1-6-6v3l5-4-5-4z"/></svg></button>
+    <button type="button" class="sb txt" id="b-fit" title="Fit or fill the screen (Z)" aria-label="Fit or fill">Fit</button>
+    <button type="button" class="sb txt" id="b-sub" title="Subtitles (S). Shift+S to choose a file" aria-label="Subtitles">CC</button>
+    <button type="button" class="sb" id="b-shot" title="Save a picture of this moment (C)" aria-label="Save picture"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9 4L7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4zm3 5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z"/></svg></button>
+    <button type="button" class="sb" id="b-list" title="Playlist (T)" aria-label="Playlist"><svg viewBox="0 0 24 24"><path d="M3 6h14v2H3zM3 11h14v2H3zM3 16h9v2H3zM18 12v7l5-3.5z"/></svg></button>
+    <button type="button" class="sb" id="b-full" title="Full screen (F)" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zM14 4h6v6h-2V6h-4zM4 14h2v4h4v2H4zM18 14h2v6h-6v-2h4z"/></svg></button>
+    <button type="button" class="sb txt" id="b-help" title="Help and shortcuts (?)" aria-label="Help">?</button>
+   </div>
+  </div>
+  <div id="eq" class="hide" role="dialog" aria-label="Equalizer">
+   <div class="eqh"><b>Equalizer</b>
+    <select id="eq-pre" aria-label="Preset"></select>
+    <button type="button" class="sm" id="eq-on" title="Switch the equalizer on or off">Off</button>
+    <button type="button" class="sm" id="eq-reset" title="Back to flat">Reset</button>
+    <button type="button" class="sm" id="eq-x" title="Close (Esc)">Close</button></div>
+   <div class="eqb" id="eq-bands"></div>
+   <div class="eqn" id="eq-note"></div>
+  </div>
+  <div id="speedmenu" class="hide"></div>
+ </div>
+</div>
+<div id="help" class="hide"><div class="hc" role="dialog" aria-label="Help">
+ <h2>Emma Media Player</h2>
+ <p class="gift">A free gift from Azure Cyber Systems, Kenya. Everything stays on your computer. Nothing is uploaded.</p>
+ <table>
+  <tr><td>Space</td><td>Play or pause</td><td>F</td><td>Full screen</td></tr>
+  <tr><td>Left / Right</td><td>Back or forward 5 seconds</td><td>R</td><td>Rotate the video</td></tr>
+  <tr><td>J / L</td><td>Back or forward 10 seconds</td><td>Z</td><td>Fit or fill the screen</td></tr>
+  <tr><td>Up / Down</td><td>Volume</td><td>S</td><td>Subtitles on or off</td></tr>
+  <tr><td>M</td><td>Mute</td><td>Shift+S</td><td>Choose a subtitle file</td></tr>
+  <tr><td>[ and ]</td><td>Slower or faster</td><td>C</td><td>Save a picture of this moment</td></tr>
+  <tr><td>P / N</td><td>Previous or next</td><td>T</td><td>Show or hide the playlist</td></tr>
+  <tr><td>O</td><td>Open files</td><td>E</td><td>Equalizer</td></tr>
+  <tr><td>Esc</td><td>Leave full screen or close this</td><td></td><td></td></tr>
+ </table>
+ <p class="fm">Plays MP4, MOV, MKV, WebM, MP3, M4A, AAC, WAV, OGG, Opus and FLAC. Some older or unusual formats cannot be played yet.</p>
+ <button type="button" class="pill" id="hx">Close</button>
+</div></div>
+<script src="app.js"></script>
+</body></html>
